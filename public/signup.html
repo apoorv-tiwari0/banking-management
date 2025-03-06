@@ -1,0 +1,82 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <title>Sign up</title>
+    <link rel="stylesheet" href="css/signup.css">
+  </head>
+
+  <body>
+    <h1 class="welcome-message">
+      Welcome to Banking Management System!
+    </h1>
+    <section>
+      <div class="wave">
+        <span></span>
+        <span></span>
+        <span></span>
+      </div>
+
+      <div>
+        <div class="card1">
+          <div class="create-your-account">
+            <h1>Create Your Account</h1>
+            <h3>Let us know you better!</h3>
+          </div>
+          <div class="card-content">
+            <form id="signup-form">  <!-- ✅ Added form tag -->
+              <span class="username"><h2>Full name:</h2></span>
+              <span class="input-username">
+                <input type="text" id="username" name="username" placeholder="Enter your username" required>
+              </span>
+              <span class="email"><h2>Email:</h2></span>
+              <span class="input-email">
+                <input type="email" id="email" name="email" placeholder="Enter your email" required>
+              </span>
+              <span class="balance"><h2>Balance:</h2></span>
+              <span class="input-email">
+                <input type="number" id="balance" name="balance" placeholder="Enter your account balance" required>
+              </span>
+              <span class="password"><h2>Password:</h2></span>
+              <span class="input-password">
+                <input type="password" id="password" name="password" placeholder="Enter your password" required>
+              </span>
+              <span class="confirm-password"><h2>Confirm Password:</h2></span>
+              <span class="input-confirm-password">
+                <input type="password" id="confirm-password" name="confirm-password" placeholder="Confirm your password" required>
+              </span>
+              <button type="submit" class="submit">Submit</button>  <!-- ✅ Form will submit on click -->
+            </form>
+            <span><h2 class="sign-in-message">Already a user? 
+              <span class="sign-in" onclick="location.href='login.html';">Sign in</span></h2>
+            </span>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <script>
+      document.getElementById("signup-form").addEventListener("submit", async function(event) {
+        event.preventDefault();  // ✅ Prevent page refresh
+
+        const username = document.getElementById("username").value;
+        const email = document.getElementById("email").value;
+        const balance = document.getElementById("balance").value;
+        const password = document.getElementById("password").value;
+        const confirmPassword = document.getElementById("confirm-password").value;
+
+        const response = await fetch("/signup", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ username, email, balance, password, confirmPassword })
+        });
+
+        const result = await response.json();
+        alert(result.message);  // ✅ Show success/error message
+
+        if (response.ok) {
+          window.location.href = "login.html";  // ✅ Redirect to login page after signup
+        }
+      });
+    </script>
+  </body>
+</html>

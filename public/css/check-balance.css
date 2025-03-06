@@ -1,0 +1,177 @@
+@import url("https://fonts.googleapis.com/css?family=Poppins:200,300,400,500,600,700,800,900&display=swap");
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+  font-family: "Poppins", sans-serif;
+}
+section {
+  position: relative;
+  width: 100%;
+  height: 100vh;
+  overflow: hidden;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  min-height: 100vh;
+}
+section .wave {
+  position: absolute;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: #4973ff;
+  box-shadow: inset 0 0 50px rgba(0, 0, 0, 0.5);
+  transition: 0.5s;
+}
+section .wave span {
+  content: "";
+  position: absolute;
+  width: 325vh;
+  height: 325vh;
+  top: 0;
+  left: 50%;
+  transform: translate(-50%, -75%);
+  background: #000;
+}
+.content {
+  position: relative;
+  z-index: 1;
+  font-size: 4em;
+  letter-spacing: 2px;
+  color: #fff;
+}
+section .wave span:nth-child(1) {
+  border-radius: 45%;
+  background: rgba(20, 20, 20, 1);
+  animation: animate 5s linear infinite;
+}
+
+section .wave span:nth-child(2) {
+  border-radius: 40%;
+  background: rgba(20, 20, 20, 0.5);
+  animation: animate 10s linear infinite;
+}
+section .wave span:nth-child(3) {
+  border-radius: 42.5%;
+  background: rgba(20, 20, 20, 0.5);
+  animation: animate 15s linear infinite;
+}
+@keyframes animate {
+  0% {
+    transform: translate(-50%, -75%) rotate(0deg);
+  }
+  100% {
+    transform: translate(-50%, -75%) rotate(360deg);
+  }
+}
+.welcome-message{
+  font-family: "Poppins", sans-serif;
+  color: white;
+  background-color: rgb(23, 22, 22);
+  padding-top: 40px;
+  padding-left: 280px;
+  font-size: 40px;
+}
+
+@import url("https://fonts.googleapis.com/css?family=Poppins:200,300,400,500,600,700,800,900&display=swap");
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+  font-family: "Poppins", sans-serif;
+}
+
+.card1{
+  margin-right: auto;
+  margin-left: auto;
+  margin-top: auto;
+  margin-bottom: auto;
+  width: 410px;
+  box-shadow: 0 15px 25px rgba(0, 0, 0, 0.2);
+  height: 410px;
+  border-radius: 25px;
+  backdrop-filter: blur(14px);
+  background-color: rgba(255, 255, 255, 0.449);
+  padding-top: 4px;
+  text-align: center;
+}
+.intro-text h1{
+  padding-top: 6px;
+  margin-top: 15px;
+  font-size: 30px;
+  padding-bottom: 0px;
+  padding-right: 25px;
+  margin-right: 120px;
+  padding-right: 3px;
+  margin-left: 5px;
+}
+
+.username h2{
+  font-size: 20px;
+  padding-top: 6px;
+  margin-top: 10px;
+  padding-bottom: 0px;
+  padding-right: 30px;
+  margin-right: 100px;
+  margin-left: 5px;
+}
+
+.password h2{
+  font-size: 20px;
+  padding-top: 6px;
+  margin-top: 10px;
+  padding-bottom: 0px;
+  padding-right: 30px;
+  margin-right: 100px;
+  margin-left: 5px;
+}
+
+.input-username input{
+  width: 250px;
+  height: 40px;
+  border-radius: 8px;
+  border: 1px solid #000;
+  padding: 10px;
+  margin-top: 10px;
+  margin-right: 10px;
+  margin-left: 5px;
+}
+
+.input-password input{
+  width: 250px;
+  height: 40px;
+  border-radius: 8px;
+  border: 1px solid #000;
+  padding: 10px;
+  margin-top: 10px;
+  margin-right: 10px;
+  margin-left: 5px;
+}
+
+.check-button{
+  cursor: pointer;
+  border-radius: 8px;
+  color: #fff;
+  background: #000;
+  font-size: 20px;
+  font-weight: 600;
+  width: 200px;
+  padding: 12px 20px;
+  margin-top: 2rem;
+  margin-right: 1rem;
+  transition-property: all;
+}
+
+.check-button:hover{
+  transform: scale(1.15);
+  color: white;
+  transition: 0.5s;
+  background: #4973ff;
+}
+
+.check-button:not(:hover){
+  color: white;
+  transition: 0.5s;
+  background: #000
+}
