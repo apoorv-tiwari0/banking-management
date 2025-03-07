@@ -124,6 +124,14 @@ app.post('/login', (req, res) => {
     });
 });
 
+// Serve send money page
+app.get('/send-money-page', (req, res) => {
+    if (!req.session.username) {
+        return res.redirect('/login.html');  // Redirect to login if not logged in
+    }
+    res.sendFile(path.join(__dirname, 'public', 'send_money_page.html'));
+});
+
 // Money transfer route
 app.post('/send-money', async (req, res) => {
     const { recipientUsername, password, amount } = req.body;
@@ -197,7 +205,25 @@ app.post('/send-money', async (req, res) => {
                                 return res.status(500).json({ message: 'Database error' });
                             }
 
-                            res.json({ message: 'Money transferred successfully' });
+                            // Log transaction for sender
+                            const logSenderTransactionQuery = 'INSERT INTO transactions (amount, accountID) VALUES (?, ?)';
+                            db.query(logSenderTransactionQuery, [-amount, sender.id], (err, result) => {
+                                if (err) {
+                                    console.error('Database error:', err);
+                                    return res.status(500).json({ message: 'Database error' });
+                                }
+
+                                // Log transaction for recipient
+                                const logRecipientTransactionQuery = 'INSERT INTO transactions (amount, accountID) VALUES (?, ?)';
+                                db.query(logRecipientTransactionQuery, [amount, recipient.id], (err, result) => {
+                                    if (err) {
+                                        console.error('Database error:', err);
+                                        return res.status(500).json({ message: 'Database error' });
+                                    }
+
+                                    res.json({ message: 'Money transferred successfully' });
+                                });
+                            });
                         });
                     });
                 });
@@ -207,6 +233,52 @@ app.post('/send-money', async (req, res) => {
         console.error('Error processing transfer:', error);
         res.status(500).json({ message: 'Server error' });
     }
+});
+
+// Check balance route
+app.post('/check-balance', async (req, res) => {
+    const { username, password } = req.body;
+
+    // Check if user exists
+    const checkUserQuery = 'SELECT * FROM users WHERE username = ?';
+    db.query(checkUserQuery, [username], async (err, results) => {
+        if (err) {
+            console.error('Database error:', err);
+            return res.status(500).json({ message: 'Database error' });
+        }
+
+        if (results.length === 0) {
+            return res.status(400).json({ message: 'Invalid username or password' });
+        }
+
+        const user = results[0];
+
+        // Compare the password with the hashed password
+        const isMatch = await bcrypt.compare(password, user.password);
+        if (!isMatch) {
+            return res.status(400).json({ message: 'Invalid username or password' });
+        }
+
+        // Get user's balance
+        const checkBalanceQuery = 'SELECT balance FROM accounts WHERE userID = ?';
+        db.query(checkBalanceQuery, [user.id], (err, balanceResults) => {
+            if (err) {
+                console.error('Database error:', err);
+                return res.status(500).json({ message: 'Database error' });
+            }
+
+            const balance = balanceResults[0].balance;
+            res.json({ balance });
+        });
+    });
+});
+
+// Route to get the logged-in username
+app.get('/get-username', (req, res) => {
+    if (!req.session.username) {
+        return res.status(401).json({ message: 'Not logged in' });
+    }
+    res.json({ username: req.session.username });
 });
 
 // Function to get the local IP address

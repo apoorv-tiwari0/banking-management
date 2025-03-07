@@ -4,6 +4,27 @@
   <head>
     <title>Check Balance</title>
     <link rel="stylesheet" href="css/check-balance.css">
+    <script>
+        async function checkBalance() {
+            const username = document.getElementById('username').value;
+            const password = document.getElementById('password').value;
+
+            const response = await fetch('/check-balance', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({ username, password })
+            });
+
+            const result = await response.json();
+            if (response.ok) {
+                document.getElementById('balance').innerText = `Your balance is: $${result.balance}`;
+            } else {
+                document.getElementById('balance').innerText = result.message;
+            }
+        }
+    </script>
   </head>
 
   <body>
@@ -31,8 +52,9 @@
               <input type="password" id="password" name="password" placeholder="Enter your password">
             </span>
           <div>
-            <button type="check" class="check-button" onclick="location.href='check-balance.html';">Check balance</button>
+            <button type="button" class="check-button" onclick="checkBalance()">Check balance</button>
           </div>
+          <div id="balance"></div>
         </div>
       </div>
     </section>

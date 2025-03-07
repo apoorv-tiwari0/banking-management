@@ -17,7 +17,7 @@
       </div>
       <div class="card1">
         <div class="intro-text">
-          <h1 class="intro-text">Hello User,</h1>
+          <h1 class="intro-text">Hello <span id="username-display"></span>,</h1>
         </div>
         <div>
           <button type="send" class="send" onclick="location.href='send_money_page.html';">Send Money</button>
@@ -27,5 +27,23 @@
         </div>
       </div>
     </section>
+
+    <script>
+      document.addEventListener('DOMContentLoaded', () => {
+        fetch('/get-username')
+          .then(response => response.json())
+          .then(data => {
+            if (data.username) {
+              document.getElementById('username-display').innerText = data.username;
+            } else {
+              document.getElementById('username-display').innerText = 'Guest';
+            }
+          })
+          .catch(error => {
+            console.error('Error fetching username:', error);
+            document.getElementById('username-display').innerText = 'Guest';
+          });
+      });
+    </script>
   </body>
 </html>
