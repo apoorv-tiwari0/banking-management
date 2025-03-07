@@ -25,24 +25,47 @@
             <h3>Please fill out the following to send money</h3>
           </div>
           <div class="card-content">
-            <h2 class="recipient">Recipient name:</h2>
+            <h2 class="recipient">Recipient username:</h2>
             <span class="input-recipient-name">
-              <input type="text" id="recipient-name" name="recipient-name" placeholder="Enter recipient name">
+              <input type="text" id="recipient-username" name="recipient-username" placeholder="Enter recipient username" required>
             </span>
-            <h2 class="password"> Enter password:</h2>
+            <h2 class="password">Enter password:</h2>
             <span class="input-password">
-              <input type="password" id="password" name="password" placeholder="Enter your password">
+              <input type="password" id="password" name="password" placeholder="Enter your password" required>
             </span>
             <h2 class="amount">Enter amount:</h2>
             <span class="input-amount">
-              <input type="number" placeholder="Enter amount" id="amount" name="amount">
+              <input type="number" placeholder="Enter amount" id="amount" name="amount" required>
             </span>
-            <button type="send" class="send">send</button>
+            <button type="button" class="send" onclick="sendMoney()">Send</button>
           </div>
         </div>
       </div>
 
     </section>
+
+    <script>
+      async function sendMoney() {
+        const recipientUsername = document.getElementById('recipient-username').value;
+        const password = document.getElementById('password').value;
+        const amount = document.getElementById('amount').value;
+
+        const response = await fetch('/send-money', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify({ recipientUsername, password, amount })
+        });
+
+        const result = await response.json();
+        alert(result.message);
+
+        if (response.ok) {
+          window.location.href = 'dashboard.html';
+        }
+      }
+    </script>
 
   </body>
 

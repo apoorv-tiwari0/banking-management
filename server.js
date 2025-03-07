@@ -3,6 +3,8 @@ const mysql = require('mysql2');  // ✅ Use mysql2 instead of mysql
 const bodyParser = require('body-parser');
 const bcrypt = require('bcrypt');
 const path = require('path');
+const os = require('os');  // ✅ Import the os module
+const session = require('express-session');  // ✅ Import express-session
 
 const app = express();
 const port = 3000;
@@ -10,6 +12,12 @@ const port = 3000;
 // Middleware
 app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({ extended: true }));
+app.use(session({
+    secret: 'your_secret_key',  // Replace with your own secret key
+    resave: false,
+    saveUninitialized: true,
+    cookie: { secure: false }  // Set to true if using HTTPS
+}));
 
 // Serve static files (HTML, CSS, JS)
 app.use(express.static(path.join(__dirname, 'public')));
@@ -39,31 +47,44 @@ app.post('/signup', async (req, res) => {
     }
 
     try {
-        // Check if email already exists
-        const checkEmailQuery = 'SELECT * FROM users WHERE email = ?';
-        db.query(checkEmailQuery, [email], async (err, results) => {
+        // Check if email or username already exists
+        const checkUserQuery = 'SELECT * FROM users WHERE email = ? OR username = ?';
+        db.query(checkUserQuery, [email, username], async (err, results) => {
             if (err) {
                 console.error('Database error:', err);
                 return res.status(500).json({ message: 'Database error' });
             }
 
             if (results.length > 0) {
-                return res.status(400).json({ message: 'Email already registered' });
+                return res.status(400).json({ message: 'Email or username already registered' });
             }
 
             // Hash the password
             const hashedPassword = await bcrypt.hash(password, 10);
 
             // Insert new user
-            const insertQuery = 'INSERT INTO users (username, email, balance, password) VALUES (?, ?, ?, ?)';
-            const values = [username, email, parseFloat(balance), hashedPassword];
+            const insertUserQuery = 'INSERT INTO users (username, email, password) VALUES (?, ?, ?)';
+            const userValues = [username, email, hashedPassword];
 
-            db.query(insertQuery, values, (err, result) => {
+            db.query(insertUserQuery, userValues, (err, result) => {
                 if (err) {
                     console.error('Error inserting user:', err);
                     return res.status(500).json({ message: 'Database error' });
                 }
-                res.json({ message: 'User registered successfully' });
+
+                const userID = result.insertId;
+
+                // Insert balance into accounts table
+                const insertAccountQuery = 'INSERT INTO accounts (userID, balance) VALUES (?, ?)';
+                const accountValues = [userID, parseFloat(balance)];
+
+                db.query(insertAccountQuery, accountValues, (err, result) => {
+                    if (err) {
+                        console.error('Error inserting account:', err);
+                        return res.status(500).json({ message: 'Database error' });
+                    }
+                    res.json({ message: 'User registered successfully' });
+                });
             });
         });
 
@@ -98,12 +119,111 @@ app.post('/login', (req, res) => {
         }
 
         // Authentication successful
+        req.session.username = username;  // Store username in session
         res.json({ message: 'Login successful' });
     });
 });
 
-// Start the server
+// Money transfer route
+app.post('/send-money', async (req, res) => {
+    const { recipientUsername, password, amount } = req.body;
+    const senderUsername = req.session.username;  // Get sender's username from session
+
+    if (!senderUsername) {
+        return res.status(400).json({ message: 'Sender not logged in' });
+    }
+
+    try {
+        // Check if sender exists
+        const checkSenderQuery = 'SELECT * FROM users WHERE username = ?';
+        db.query(checkSenderQuery, [senderUsername], async (err, senderResults) => {
+            if (err) {
+                console.error('Database error:', err);
+                return res.status(500).json({ message: 'Database error' });
+            }
+
+            if (senderResults.length === 0) {
+                return res.status(400).json({ message: 'Invalid sender username' });
+            }
+
+            const sender = senderResults[0];
+
+            // Compare the password with the hashed password
+            const isMatch = await bcrypt.compare(password, sender.password);
+            if (!isMatch) {
+                return res.status(400).json({ message: 'Invalid password' });
+            }
+
+            // Check if recipient exists
+            const checkRecipientQuery = 'SELECT * FROM users WHERE username = ?';
+            db.query(checkRecipientQuery, [recipientUsername], (err, recipientResults) => {
+                if (err) {
+                    console.error('Database error:', err);
+                    return res.status(500).json({ message: 'Database error' });
+                }
+
+                if (recipientResults.length === 0) {
+                    return res.status(400).json({ message: 'Invalid recipient username' });
+                }
+
+                const recipient = recipientResults[0];
+
+                // Check sender's balance
+                const checkSenderBalanceQuery = 'SELECT * FROM accounts WHERE userID = ?';
+                db.query(checkSenderBalanceQuery, [sender.id], (err, senderAccountResults) => {
+                    if (err) {
+                        console.error('Database error:', err);
+                        return res.status(500).json({ message: 'Database error' });
+                    }
+
+                    const senderAccount = senderAccountResults[0];
+                    if (senderAccount.balance < amount) {
+                        return res.status(400).json({ message: 'Insufficient balance' });
+                    }
+
+                    // Deduct amount from sender's account
+                    const updateSenderBalanceQuery = 'UPDATE accounts SET balance = balance - ? WHERE userID = ?';
+                    db.query(updateSenderBalanceQuery, [amount, sender.id], (err, result) => {
+                        if (err) {
+                            console.error('Database error:', err);
+                            return res.status(500).json({ message: 'Database error' });
+                        }
+
+                        // Add amount to recipient's account
+                        const updateRecipientBalanceQuery = 'UPDATE accounts SET balance = balance + ? WHERE userID = ?';
+                        db.query(updateRecipientBalanceQuery, [amount, recipient.id], (err, result) => {
+                            if (err) {
+                                console.error('Database error:', err);
+                                return res.status(500).json({ message: 'Database error' });
+                            }
+
+                            res.json({ message: 'Money transferred successfully' });
+                        });
+                    });
+                });
+            });
+        });
+    } catch (error) {
+        console.error('Error processing transfer:', error);
+        res.status(500).json({ message: 'Server error' });
+    }
+});
+
+// Function to get the local IP address
+function getLocalIpAddress() {
+    const interfaces = os.networkInterfaces();
+    for (const name of Object.keys(interfaces)) {
+        for (const iface of interfaces[name]) {
+            if (iface.family === 'IPv4' && !iface.internal) {
+                return iface.address;
+            }
+        }
+    }
+    return 'localhost';
+}
+
 app.listen(port, () => {
-    console.log(`Server running on port ${port}`);
-    console.log(`Signup page: http://localhost:${port}/signup.html`);  // ✅ Prints signup page URL
+    const ipAddress = getLocalIpAddress();
+    console.log(`Server running at http://${ipAddress}:${port}/`);
+    console.log(`Server running at http://localhost:${port}/signup.html`);
 });
